@@ -647,7 +647,7 @@ static int render_impl(BqnPlChart *ch) {
   plinit();
   apply_palette(ch);
   pladv(0);
-  plschr(0.0, 0.75);
+  plschr(0.0, 0.1875);
 
   BqnPlRenderCtx ctx;
   ctx.next_dynamic_color = BQNPL_MAX_COLORS - 1;

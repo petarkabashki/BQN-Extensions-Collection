@@ -1,7 +1,7 @@
 # priceio.bqn — high-level BQN API for local Parquet OHLCV data via DuckDB.
 #
 # Expected Parquet columns:
-#   timestamp, open, high, low, close, volume
+#   0, 1, 2, 3, 4, 5 (timestamp_ms, open, high, low, close, volume)
 #
 # Returned namespace fields:
 #   names    list of column names
@@ -76,9 +76,8 @@ ReadOHLCVRangeMode ⇐ {𝕊 path‿from_ms‿to_ms‿time_mode:
 #
 # Whole-file readers.
 #
-# The attached Binance file has:
-#   timestamp bigint      # epoch milliseconds
-#   date      timestamp_ns
+# The local data/ BTC file has:
+#   0 = epoch milliseconds, 1 = open, 2 = high, 3 = low, 4 = close, 5 = volume
 # Therefore the no-suffix default tries epoch-ms first. If that is wrong for a
 # different file, it falls back to date, then timestamp-as-timestamp.
 ReadOHLCVTimestamp ⇐ {𝕊 path: ReadOHLCVRangeMode path‿0‿¯1‿0}

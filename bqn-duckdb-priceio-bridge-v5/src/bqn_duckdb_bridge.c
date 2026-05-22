@@ -21,7 +21,7 @@ struct BqnPriceTable {
 };
 
 static const char *COL_NAMES[BQN_PRICE_COLS] = {
-    "ts_ms", "open", "high", "low", "close", "volume"
+    "ts_ms", "1", "2", "3", "4", "5"
 };
 
 static char *dup_cstr(const char *s) {
@@ -161,14 +161,14 @@ static char *sql_quote_literal(const char *s) {
 static const char *time_expr_for_mode(int32_t time_mode) {
     switch (time_mode) {
         case 0:
-            /* timestamp column is DuckDB TIMESTAMP/TIMESTAMP_NS/DATE-like. */
-            return "CAST(epoch_ms(CAST(\"timestamp\" AS TIMESTAMP)) AS DOUBLE)";
+            /* column 0 is DuckDB TIMESTAMP/TIMESTAMP_NS/DATE-like. */
+            return "CAST(epoch_ms(CAST(\"0\" AS TIMESTAMP)) AS DOUBLE)";
         case 1:
-            /* timestamp column is already epoch milliseconds, e.g. BIGINT. */
-            return "CAST(\"timestamp\" AS DOUBLE)";
+            /* column 0 is already epoch milliseconds, e.g. BIGINT. */
+            return "CAST(\"0\" AS DOUBLE)";
         case 2:
-            /* timestamp column is epoch seconds. */
-            return "CAST(\"timestamp\" AS DOUBLE) * 1000.0";
+            /* column 0 is epoch seconds. */
+            return "CAST(\"0\" AS DOUBLE) * 1000.0";
         case 3:
             /* date column is DuckDB TIMESTAMP/TIMESTAMP_NS/DATE-like. */
             return "CAST(epoch_ms(CAST(\"date\" AS TIMESTAMP)) AS DOUBLE)";
@@ -194,11 +194,11 @@ static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms,
     const char *prefix =
         "WITH q AS ("
         " SELECT %s AS ts_ms,"
-        "        CAST(\"open\" AS DOUBLE) AS open,"
-        "        CAST(\"high\" AS DOUBLE) AS high,"
-        "        CAST(\"low\" AS DOUBLE) AS low,"
-        "        CAST(\"close\" AS DOUBLE) AS close,"
-        "        CAST(\"volume\" AS DOUBLE) AS volume"
+        "        CAST(\"1\" AS DOUBLE) AS open,"
+        "        CAST(\"2\" AS DOUBLE) AS high,"
+        "        CAST(\"3\" AS DOUBLE) AS low,"
+        "        CAST(\"4\" AS DOUBLE) AS close,"
+        "        CAST(\"5\" AS DOUBLE) AS volume"
         " FROM read_parquet(%s)"
         ")"
         " SELECT ts_ms, open, high, low, close, volume FROM q";
