@@ -14,10 +14,18 @@ Parquet files:      read_parquet(...)
 
 ## Expected Parquet schema
 
-The default reader expects these column names:
+The default auto reader first tries named columns, then falls back to numeric columns.
+
+Named schema:
 
 ```text
 timestamp, open, high, low, close, volume
+```
+
+Numeric schema:
+
+```text
+0, 1, 2, 3, 4, 5
 ```
 
 The C layer projects and casts them to:
@@ -41,6 +49,8 @@ This downloads `libduckdb-linux-amd64.zip` into `.deps/duckdb` and builds:
 ```text
 build/libbqn_duckdb_bridge.so
 ```
+
+The BQN binding loads `../build/libbqn_duckdb_bridge.so` by default. Set `BQN_DUCKDB_BRIDGE_LIB` to an absolute shared-library path when importing from a different layout.
 
 ## Usage from CBQN
 

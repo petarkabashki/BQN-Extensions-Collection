@@ -21,7 +21,7 @@ struct BqnPriceTable {
 };
 
 static const char *COL_NAMES[BQN_PRICE_COLS] = {
-    "ts_ms", "1", "2", "3", "4", "5"
+    "ts_ms", "open", "high", "low", "close", "volume"
 };
 
 static char *dup_cstr(const char *s) {

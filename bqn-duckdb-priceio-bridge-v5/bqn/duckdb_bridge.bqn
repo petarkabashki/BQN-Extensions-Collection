@@ -3,7 +3,8 @@
 # This file is intentionally thin: it binds C functions and exports them.
 # The higher-level, BQN-shaped interface is in priceio.bqn.
 
-libPath ← "../build/libbqn_duckdb_bridge.so"
+envLibPath ← 1 ⊑ •SH ⟨"sh", "-c", "printf %s ${BQN_DUCKDB_BRIDGE_LIB:-}"⟩
+libPath ← (0=≠envLibPath)⊑⟨envLibPath, "../build/libbqn_duckdb_bridge.so"⟩
 
 # Opaque table pointer API.
 readRaw   ⇐ libPath •FFI "*"    ‿"bqn_price_read_ohlcv"     ‿"*u8:c8"‿"i64"‿"i64"‿"i32"‿"i32"

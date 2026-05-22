@@ -1,7 +1,8 @@
 # priceio.bqn — high-level BQN API for local Parquet OHLCV data via DuckDB.
 #
-# Expected Parquet columns:
-#   0, 1, 2, 3, 4, 5 (timestamp_ms, open, high, low, close, volume)
+# Default auto schema detection tries:
+#   1. named: timestamp, open, high, low, close, volume
+#   2. numeric: 0, 1, 2, 3, 4, 5 (timestamp_ms, open, high, low, close, volume)
 #
 # Returned namespace fields:
 #   names    list of column names
