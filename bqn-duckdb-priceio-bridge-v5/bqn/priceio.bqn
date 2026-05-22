@@ -67,10 +67,16 @@ BuildResult ← {𝕊 tbl:
 #   3 = date is TIMESTAMP-like; timestamp may still be BIGINT
 # from_ms/to_ms:
 #   if from_ms <= to_ms, inclusive filter; otherwise full file
-ReadOHLCVRangeMode ⇐ {𝕊 path‿from_ms‿to_ms‿time_mode:
-  tbl ← Check bridge.ReadRaw ⟨path∾@, from_ms, to_ms, time_mode⟩
+ReadOHLCVRangeModeSchema ⇐ {𝕊 path‿from_ms‿to_ms‿time_mode‿schema_mode:
+  tbl ← Check bridge.ReadRaw ⟨path∾@, from_ms, to_ms, time_mode, schema_mode⟩
   BuildResult tbl
 }
+
+# schema_mode: 1=named timestamp/open/high/low/close/volume, 2=numeric 0..5.
+# The default auto mode tries named columns first, then numeric columns.
+ReadOHLCVRangeModeNamed ← {𝕊 path‿from_ms‿to_ms‿time_mode: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿time_mode‿1}
+ReadOHLCVRangeModeNumeric ← {𝕊 path‿from_ms‿to_ms‿time_mode: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿time_mode‿2}
+ReadOHLCVRangeMode ⇐ ReadOHLCVRangeModeNamed⎊ReadOHLCVRangeModeNumeric
 
 # Whole-file readers.
 #
@@ -92,5 +98,10 @@ ReadOHLCVMsRange        ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode pat
 ReadOHLCVSecondsRange   ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode path‿from_ms‿to_ms‿2}
 ReadOHLCVDateRange      ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode path‿from_ms‿to_ms‿3}
 ReadOHLCVRange          ⇐ ReadOHLCVMsRange⎊(ReadOHLCVDateRange⎊ReadOHLCVRangeTimestamp)
+
+ReadOHLCVNamedMs      ⇐ {𝕊 path: ReadOHLCVRangeModeSchema path‿0‿¯1‿1‿1}
+ReadOHLCVNumericMs    ⇐ {𝕊 path: ReadOHLCVRangeModeSchema path‿0‿¯1‿1‿2}
+ReadOHLCVNamedMsRange ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿1‿1}
+ReadOHLCVNumericMsRange ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿1‿2}
 
 DuckDBVersion ⇐ bridge.DuckDBVersion

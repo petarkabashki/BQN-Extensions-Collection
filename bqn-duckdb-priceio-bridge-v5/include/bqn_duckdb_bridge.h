@@ -34,8 +34,9 @@ extern "C" {
  *   If from_ms > to_ms, no time filter is applied.
  *
  * Expected Parquet columns:
- *   timestamp, open, high, low, close, volume
- *   For mode 3, date is also required.
+ *   schema_mode 1: timestamp, open, high, low, close, volume
+ *   schema_mode 2: 0, 1, 2, 3, 4, 5
+ *   For time mode 3, date is also required.
  */
 
 typedef struct BqnPriceTable BqnPriceTable;
@@ -44,7 +45,8 @@ BqnPriceTable *bqn_price_read_ohlcv(
     const char *parquet_path,
     int64_t from_ms,
     int64_t to_ms,
-    int32_t time_mode
+    int32_t time_mode,
+    int32_t schema_mode
 );
 
 void bqn_price_table_free(BqnPriceTable *table);

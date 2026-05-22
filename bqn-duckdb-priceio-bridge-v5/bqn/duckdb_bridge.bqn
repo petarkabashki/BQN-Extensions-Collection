@@ -6,7 +6,7 @@
 libPath ← "../build/libbqn_duckdb_bridge.so"
 
 # Opaque table pointer API.
-readRaw   ⇐ libPath •FFI "*"    ‿"bqn_price_read_ohlcv"     ‿"*u8:c8"‿"i64"‿"i64"‿"i32"
+readRaw   ⇐ libPath •FFI "*"    ‿"bqn_price_read_ohlcv"     ‿"*u8:c8"‿"i64"‿"i64"‿"i32"‿"i32"
 freeRaw   ⇐ libPath •FFI ""     ‿"bqn_price_table_free"     ‿">*"
 statusRaw ⇐ libPath •FFI "i64"  ‿"bqn_price_table_status"   ‿">*"
 rowsRaw   ⇐ libPath •FFI "i64"  ‿"bqn_price_table_rows"     ‿">*"

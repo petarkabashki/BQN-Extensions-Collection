@@ -158,32 +158,28 @@ static char *sql_quote_literal(const char *s) {
     return out;
 }
 
-static const char *time_expr_for_mode(int32_t time_mode) {
+static const char *time_expr_for_mode(int32_t time_mode, int32_t schema_mode) {
     switch (time_mode) {
         case 0:
-            /* column 0 is DuckDB TIMESTAMP/TIMESTAMP_NS/DATE-like. */
-            return "CAST(epoch_ms(CAST(\"0\" AS TIMESTAMP)) AS DOUBLE)";
+            return schema_mode == 2 ? "CAST(epoch_ms(CAST(\"0\" AS TIMESTAMP)) AS DOUBLE)" : "CAST(epoch_ms(CAST(\"timestamp\" AS TIMESTAMP)) AS DOUBLE)";
         case 1:
-            /* column 0 is already epoch milliseconds, e.g. BIGINT. */
-            return "CAST(\"0\" AS DOUBLE)";
+            return schema_mode == 2 ? "CAST(\"0\" AS DOUBLE)" : "CAST(\"timestamp\" AS DOUBLE)";
         case 2:
-            /* column 0 is epoch seconds. */
-            return "CAST(\"0\" AS DOUBLE) * 1000.0";
+            return schema_mode == 2 ? "CAST(\"0\" AS DOUBLE) * 1000.0" : "CAST(\"timestamp\" AS DOUBLE) * 1000.0";
         case 3:
-            /* date column is DuckDB TIMESTAMP/TIMESTAMP_NS/DATE-like. */
             return "CAST(epoch_ms(CAST(\"date\" AS TIMESTAMP)) AS DOUBLE)";
         default:
             return NULL;
     }
 }
 
-static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms, int32_t time_mode) {
+static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms, int32_t time_mode, int32_t schema_mode) {
     char *path_lit = sql_quote_literal(parquet_path);
     if (!path_lit) {
         return NULL;
     }
 
-    const char *ts_expr = time_expr_for_mode(time_mode);
+    const char *ts_expr = time_expr_for_mode(time_mode, schema_mode);
     if (!ts_expr) {
         free(path_lit);
         return NULL;
@@ -191,14 +187,20 @@ static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms,
 
     const bool use_filter = from_ms <= to_ms;
 
+    const char *open_col = schema_mode == 2 ? "\"1\"" : "\"open\"";
+    const char *high_col = schema_mode == 2 ? "\"2\"" : "\"high\"";
+    const char *low_col = schema_mode == 2 ? "\"3\"" : "\"low\"";
+    const char *close_col = schema_mode == 2 ? "\"4\"" : "\"close\"";
+    const char *volume_col = schema_mode == 2 ? "\"5\"" : "\"volume\"";
+
     const char *prefix =
         "WITH q AS ("
         " SELECT %s AS ts_ms,"
-        "        CAST(\"1\" AS DOUBLE) AS open,"
-        "        CAST(\"2\" AS DOUBLE) AS high,"
-        "        CAST(\"3\" AS DOUBLE) AS low,"
-        "        CAST(\"4\" AS DOUBLE) AS close,"
-        "        CAST(\"5\" AS DOUBLE) AS volume"
+        "        CAST(%s AS DOUBLE) AS open,"
+        "        CAST(%s AS DOUBLE) AS high,"
+        "        CAST(%s AS DOUBLE) AS low,"
+        "        CAST(%s AS DOUBLE) AS close,"
+        "        CAST(%s AS DOUBLE) AS volume"
         " FROM read_parquet(%s)"
         ")"
         " SELECT ts_ms, open, high, low, close, volume FROM q";
@@ -206,7 +208,7 @@ static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms,
     const char *filter = " WHERE ts_ms >= %lld AND ts_ms <= %lld";
     const char *suffix = " ORDER BY ts_ms";
 
-    int needed = snprintf(NULL, 0, prefix, ts_expr, path_lit);
+    int needed = snprintf(NULL, 0, prefix, ts_expr, open_col, high_col, low_col, close_col, volume_col, path_lit);
     if (needed < 0) {
         free(path_lit);
         return NULL;
@@ -227,7 +229,7 @@ static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms,
         return NULL;
     }
 
-    int offset = snprintf(sql, (size_t)needed, prefix, ts_expr, path_lit);
+    int offset = snprintf(sql, (size_t)needed, prefix, ts_expr, open_col, high_col, low_col, close_col, volume_col, path_lit);
     if (use_filter) {
         offset += snprintf(sql + offset, (size_t)needed - (size_t)offset,
                            filter, (long long)from_ms, (long long)to_ms);
@@ -291,13 +293,17 @@ BqnPriceTable *bqn_price_read_ohlcv(
     const char *parquet_path,
     int64_t from_ms,
     int64_t to_ms,
-    int32_t time_mode
+    int32_t time_mode,
+    int32_t schema_mode
 ) {
     if (!parquet_path || parquet_path[0] == '\0') {
         return table_error(1, "parquet_path is empty");
     }
-    if (!time_expr_for_mode(time_mode)) {
+    if (!time_expr_for_mode(time_mode, schema_mode)) {
         return table_error(1, "invalid time_mode; expected 0=timestamp, 1=epoch_ms, 2=epoch_seconds, 3=date_column");
+    }
+    if (schema_mode < 1 || schema_mode > 2) {
+        return table_error(1, "invalid schema_mode; expected 1=named, 2=numeric");
     }
 
     BqnPriceTable *t = table_new();
@@ -305,7 +311,7 @@ BqnPriceTable *bqn_price_read_ohlcv(
         return NULL;
     }
 
-    char *sql = build_sql(parquet_path, from_ms, to_ms, time_mode);
+    char *sql = build_sql(parquet_path, from_ms, to_ms, time_mode, schema_mode);
     if (!sql) {
         table_set_error(t, 1, "failed to allocate SQL string");
         return t;
