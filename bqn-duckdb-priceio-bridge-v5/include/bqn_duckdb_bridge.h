@@ -36,7 +36,8 @@ extern "C" {
  * Expected Parquet columns:
  *   schema_mode 1: timestamp, open, high, low, close, volume
  *   schema_mode 2: 0, 1, 2, 3, 4, 5
- *   For time mode 3, date is also required.
+ *   schema_mode 3: Date, Open, High, Low, Close, Volume
+ *   For time mode 3, date is also required for schema modes 1-2; schema mode 3 uses Date.
  */
 
 typedef struct BqnPriceTable BqnPriceTable;

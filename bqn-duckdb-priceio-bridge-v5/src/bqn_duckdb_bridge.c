@@ -161,13 +161,13 @@ static char *sql_quote_literal(const char *s) {
 static const char *time_expr_for_mode(int32_t time_mode, int32_t schema_mode) {
     switch (time_mode) {
         case 0:
-            return schema_mode == 2 ? "CAST(epoch_ms(CAST(\"0\" AS TIMESTAMP)) AS DOUBLE)" : "CAST(epoch_ms(CAST(\"timestamp\" AS TIMESTAMP)) AS DOUBLE)";
+            return schema_mode == 2 ? "CAST(epoch_ms(CAST(\"0\" AS TIMESTAMP)) AS DOUBLE)" : (schema_mode == 3 ? "CAST(epoch_ms(CAST(\"Date\" AS TIMESTAMP)) AS DOUBLE)" : "CAST(epoch_ms(CAST(\"timestamp\" AS TIMESTAMP)) AS DOUBLE)");
         case 1:
-            return schema_mode == 2 ? "CAST(\"0\" AS DOUBLE)" : "CAST(\"timestamp\" AS DOUBLE)";
+            return schema_mode == 2 ? "CAST(\"0\" AS DOUBLE)" : (schema_mode == 3 ? "CAST(\"Date\" AS DOUBLE)" : "CAST(\"timestamp\" AS DOUBLE)");
         case 2:
-            return schema_mode == 2 ? "CAST(\"0\" AS DOUBLE) * 1000.0" : "CAST(\"timestamp\" AS DOUBLE) * 1000.0";
+            return schema_mode == 2 ? "CAST(\"0\" AS DOUBLE) * 1000.0" : (schema_mode == 3 ? "CAST(\"Date\" AS DOUBLE) * 1000.0" : "CAST(\"timestamp\" AS DOUBLE) * 1000.0");
         case 3:
-            return "CAST(epoch_ms(CAST(\"date\" AS TIMESTAMP)) AS DOUBLE)";
+            return schema_mode == 3 ? "CAST(epoch_ms(CAST(\"Date\" AS TIMESTAMP)) AS DOUBLE)" : (schema_mode == 2 ? "CAST(epoch_ms(CAST(\"0\" AS TIMESTAMP)) AS DOUBLE)" : "CAST(epoch_ms(CAST(\"date\" AS TIMESTAMP)) AS DOUBLE)");
         default:
             return NULL;
     }
@@ -187,11 +187,11 @@ static char *build_sql(const char *parquet_path, int64_t from_ms, int64_t to_ms,
 
     const bool use_filter = from_ms <= to_ms;
 
-    const char *open_col = schema_mode == 2 ? "\"1\"" : "\"open\"";
-    const char *high_col = schema_mode == 2 ? "\"2\"" : "\"high\"";
-    const char *low_col = schema_mode == 2 ? "\"3\"" : "\"low\"";
-    const char *close_col = schema_mode == 2 ? "\"4\"" : "\"close\"";
-    const char *volume_col = schema_mode == 2 ? "\"5\"" : "\"volume\"";
+    const char *open_col = schema_mode == 2 ? "\"1\"" : (schema_mode == 3 ? "\"Open\"" : "\"open\"");
+    const char *high_col = schema_mode == 2 ? "\"2\"" : (schema_mode == 3 ? "\"High\"" : "\"high\"");
+    const char *low_col = schema_mode == 2 ? "\"3\"" : (schema_mode == 3 ? "\"Low\"" : "\"low\"");
+    const char *close_col = schema_mode == 2 ? "\"4\"" : (schema_mode == 3 ? "\"Close\"" : "\"close\"");
+    const char *volume_col = schema_mode == 2 ? "\"5\"" : (schema_mode == 3 ? "\"Volume\"" : "\"volume\"");
 
     const char *prefix =
         "WITH q AS ("
@@ -302,8 +302,8 @@ BqnPriceTable *bqn_price_read_ohlcv(
     if (!time_expr_for_mode(time_mode, schema_mode)) {
         return table_error(1, "invalid time_mode; expected 0=timestamp, 1=epoch_ms, 2=epoch_seconds, 3=date_column");
     }
-    if (schema_mode < 1 || schema_mode > 2) {
-        return table_error(1, "invalid schema_mode; expected 1=named, 2=numeric");
+    if (schema_mode < 1 || schema_mode > 3) {
+        return table_error(1, "invalid schema_mode; expected 1=named, 2=numeric, 3=yahoo");
     }
 
     BqnPriceTable *t = table_new();

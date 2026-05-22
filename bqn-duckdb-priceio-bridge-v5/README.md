@@ -28,7 +28,13 @@ Numeric schema:
 0, 1, 2, 3, 4, 5
 ```
 
-The C layer projects and casts them to:
+Uppercase Yahoo schema:
+
+```text
+Date, Open, High, Low, Close, Volume
+```
+
+The C layer projects and casts all schema modes to:
 
 ```text
 ts_ms, open, high, low, close, volume
@@ -72,6 +78,9 @@ d ← p.ReadOHLCVTimestamp "data/BTCUSDT-1h.parquet"
 
 # Explicit: timestamp is epoch seconds.
 d ← p.ReadOHLCVSeconds "data/BTCUSDT-1h.parquet"
+
+# Explicit: Yahoo-style uppercase Date/Open/High/Low/Close/Volume.
+y ← p.ReadOHLCVYahoo "price-data/stocks/AAL.parquet"
 
 # inclusive range filter, using epoch milliseconds
 r ← p.ReadOHLCVMsRange "data/BTCUSDT-1h.parquet"‿1704067200000‿1706745600000

@@ -73,10 +73,11 @@ ReadOHLCVRangeModeSchema ⇐ {𝕊 path‿from_ms‿to_ms‿time_mode‿schema_m
   BuildResult tbl
 }
 
-# schema_mode: 1=named timestamp/open/high/low/close/volume, 2=numeric 0..5.
+# schema_mode: 1=named timestamp/open/high/low/close/volume, 2=numeric 0..5, 3=uppercase Yahoo Date/Open/High/Low/Close/Volume.
 # The default auto mode tries named columns first, then numeric columns.
 ReadOHLCVRangeModeNamed ← {𝕊 path‿from_ms‿to_ms‿time_mode: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿time_mode‿1}
 ReadOHLCVRangeModeNumeric ← {𝕊 path‿from_ms‿to_ms‿time_mode: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿time_mode‿2}
+ReadOHLCVRangeModeYahoo ← {𝕊 path‿from_ms‿to_ms‿time_mode: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿time_mode‿3}
 ReadOHLCVRangeMode ⇐ ReadOHLCVRangeModeNamed⎊ReadOHLCVRangeModeNumeric
 
 # Whole-file readers.
@@ -91,18 +92,20 @@ ReadOHLCVTimestamp ⇐ {𝕊 path: ReadOHLCVRangeMode path‿0‿¯1‿0}
 ReadOHLCVMs        ⇐ {𝕊 path: ReadOHLCVRangeMode path‿0‿¯1‿1}
 ReadOHLCVSeconds   ⇐ {𝕊 path: ReadOHLCVRangeMode path‿0‿¯1‿2}
 ReadOHLCVDate      ⇐ {𝕊 path: ReadOHLCVRangeMode path‿0‿¯1‿3}
-ReadOHLCV          ⇐ ReadOHLCVMs⎊(ReadOHLCVDate⎊ReadOHLCVTimestamp)
+ReadOHLCV          ⇐ ReadOHLCVMs⎊(ReadOHLCVDate⎊(ReadOHLCVTimestamp⎊{𝕊 path: ReadOHLCVRangeModeYahoo path‿0‿¯1‿3}))
 
 # Inclusive time-range readers in epoch milliseconds.
 ReadOHLCVRangeTimestamp ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode path‿from_ms‿to_ms‿0}
 ReadOHLCVMsRange        ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode path‿from_ms‿to_ms‿1}
 ReadOHLCVSecondsRange   ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode path‿from_ms‿to_ms‿2}
 ReadOHLCVDateRange      ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeMode path‿from_ms‿to_ms‿3}
-ReadOHLCVRange          ⇐ ReadOHLCVMsRange⎊(ReadOHLCVDateRange⎊ReadOHLCVRangeTimestamp)
+ReadOHLCVRange          ⇐ ReadOHLCVMsRange⎊(ReadOHLCVDateRange⎊(ReadOHLCVRangeTimestamp⎊{𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeModeYahoo path‿from_ms‿to_ms‿3}))
 
 ReadOHLCVNamedMs      ⇐ {𝕊 path: ReadOHLCVRangeModeSchema path‿0‿¯1‿1‿1}
 ReadOHLCVNumericMs    ⇐ {𝕊 path: ReadOHLCVRangeModeSchema path‿0‿¯1‿1‿2}
+ReadOHLCVYahoo       ⇐ {𝕊 path: ReadOHLCVRangeModeSchema path‿0‿¯1‿3‿3}
 ReadOHLCVNamedMsRange ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿1‿1}
 ReadOHLCVNumericMsRange ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿1‿2}
+ReadOHLCVYahooRange ⇐ {𝕊 path‿from_ms‿to_ms: ReadOHLCVRangeModeSchema path‿from_ms‿to_ms‿3‿3}
 
 DuckDBVersion ⇐ bridge.DuckDBVersion
