@@ -88,6 +88,18 @@ plt.Style ch‿trend‿plt.styleDashDot‿2.5
 
 `Segment` is just a two-point line. It is suitable for fitted trend lines, local support/resistance, slope channels, and diagnostic regression segments.
 
+
+## Text annotations
+
+Use `Text` for data-coordinate labels such as fib ratios, event names, or swing identifiers:
+
+```bqn
+label ← plt.Text ch‿price‿plt.axisPrimary‿"Fib"‿5‿"1.618"‿1‿0‿0‿0.18‿⟨120⟩‿⟨69000⟩
+plt.SeriesRGBA ch‿label‿plt.colorPrimary‿255‿180‿80‿0.85
+```
+
+The `dx` and `dy` arguments control text direction, `just` controls justification along that direction, and `size` controls PLplot character scale. Text uses the selected series color, so transparent labels can use `SeriesRGBA`.
+
 ## Transparent spans and bands
 
 Background spans use the panel y-range:

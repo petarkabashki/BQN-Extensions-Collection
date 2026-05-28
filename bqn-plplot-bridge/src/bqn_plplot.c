@@ -60,6 +60,10 @@ typedef struct {
   BqnPlColor color2;
   int line_style;
   double line_width;
+  double text_dx;
+  double text_dy;
+  double text_just;
+  double text_size;
   int n;
   char *label;
   char *symbol;
@@ -76,6 +80,9 @@ typedef struct {
   double weight;
   char *ylabel;
   char *y2label;
+  int y_override[2];
+  double y_min[2];
+  double y_max[2];
 } BqnPlPanel;
 
 struct BqnPlChart {
@@ -255,8 +262,25 @@ int32_t bqnpl_add_panel(BqnPlChart *ch, double height_weight, const char *ylabel
   ch->panels[id].weight = height_weight > 0.0 ? height_weight : 1.0;
   ch->panels[id].ylabel = dupstr(ylabel ? ylabel : "");
   ch->panels[id].y2label = dupstr(y2label ? y2label : "");
+  for (int ax = 0; ax < 2; ++ax) {
+    ch->panels[id].y_override[ax] = 0;
+    ch->panels[id].y_min[ax] = 0.0;
+    ch->panels[id].y_max[ax] = 0.0;
+  }
   if (!ch->panels[id].ylabel || !ch->panels[id].y2label) return fail("out of memory adding panel");
   return id;
+}
+
+int32_t bqnpl_set_y_range(BqnPlChart *ch, int32_t panel, int32_t axis, double ymin, double ymax) {
+  if (!ch) return fail("chart is null");
+  if (panel < 0 || panel >= ch->panel_count) return fail("invalid panel index %d", panel);
+  if (axis != BQNPL_AXIS_PRIMARY && axis != BQNPL_AXIS_SECONDARY) return fail("invalid axis %d", axis);
+  if (!isfinite(ymin) || !isfinite(ymax)) return fail("y range must be finite");
+  if (ymin >= ymax) return fail("y range min must be less than max");
+  ch->panels[panel].y_override[axis] = 1;
+  ch->panels[panel].y_min[axis] = ymin;
+  ch->panels[panel].y_max[axis] = ymax;
+  return 0;
 }
 
 int32_t bqnpl_set_palette_rgba(BqnPlChart *ch, int32_t color_index_, int32_t r, int32_t g, int32_t b, double alpha) {
@@ -313,6 +337,10 @@ static BqnPlSeries *new_series(BqnPlChart *ch, int kind, int panel, int axis, co
   s->color2 = color_index(color2);
   s->line_style = BQNPL_LINE_SOLID;
   s->line_width = 1.0;
+  s->text_dx = 1.0;
+  s->text_dy = 0.0;
+  s->text_just = 0.0;
+  s->text_size = 0.1875;
   s->n = n;
   if (!s->label) { fail("out of memory adding series"); return NULL; }
   return s;
@@ -352,6 +380,21 @@ int32_t bqnpl_add_markers(BqnPlChart *ch, int32_t panel, int32_t axis, const cha
   s->symbol = dupstr(symbol ? symbol : "•");
   s->x = copy_f64(x, n); s->y = copy_f64(y, n);
   if (!s->symbol || !s->x || !s->y) return fail("out of memory copying marker data");
+  return ch->series_count - 1;
+}
+
+int32_t bqnpl_add_text(BqnPlChart *ch, int32_t panel, int32_t axis, const char *label,
+                       int32_t color, const char *text, double dx, double dy, double just,
+                       double size, int32_t n, const double *x, const double *y) {
+  BqnPlSeries *s = new_series(ch, BQNPL_TEXT, panel, axis, label, color, 0, n);
+  if (!s) return -1;
+  s->symbol = dupstr(text ? text : "");
+  s->x = copy_f64(x, n); s->y = copy_f64(y, n);
+  s->text_dx = isfinite(dx) ? dx : 1.0;
+  s->text_dy = isfinite(dy) ? dy : 0.0;
+  s->text_just = isfinite(just) ? just : 0.0;
+  s->text_size = (isfinite(size) && size > 0.0) ? size : 0.1875;
+  if (!s->symbol || !s->x || !s->y) return fail("out of memory copying text data");
   return ch->series_count - 1;
 }
 
@@ -474,6 +517,7 @@ static void panel_ranges(BqnPlChart *ch, int panel, double *xmin, double *xmax, 
           break;
         case BQNPL_LINE:
         case BQNPL_MARKER:
+        case BQNPL_TEXT:
           expand_range(&y_min[ax], &y_max[ax], s->y[i]);
           axis_used[ax] = 1;
           break;
@@ -489,7 +533,14 @@ static void panel_ranges(BqnPlChart *ch, int panel, double *xmin, double *xmax, 
   if (!isfinite(*xmin) || !isfinite(*xmax) || *xmin == *xmax) { *xmin = 0.0; *xmax = 1.0; }
   double xpad = 0.02 * (*xmax - *xmin);
   if (xpad > 0.0 && isfinite(xpad)) { *xmin -= xpad; *xmax += xpad; }
+  const BqnPlPanel *pnl = &ch->panels[panel];
   for (int ax = 0; ax < 2; ++ax) {
+    if (pnl->y_override[ax]) {
+      y_min[ax] = pnl->y_min[ax];
+      y_max[ax] = pnl->y_max[ax];
+      axis_used[ax] = 1;
+      continue;
+    }
     if (!axis_used[ax] || !isfinite(y_min[ax]) || !isfinite(y_max[ax]) || y_min[ax] == y_max[ax]) {
       y_min[ax] = 0.0; y_max[ax] = 1.0;
     }
@@ -610,6 +661,15 @@ static void draw_series(BqnPlRenderCtx *ctx, const BqnPlSeries *s, int axis, dou
     case BQNPL_MARKER:
       apply_series_style(ctx, s, 0);
       plstring((PLINT)s->n, s->x, s->y, s->symbol ? s->symbol : "•");
+      break;
+    case BQNPL_TEXT:
+      apply_series_style(ctx, s, 0);
+      plschr(0.0, (PLFLT)s->text_size);
+      for (int i = 0; i < s->n; ++i) {
+        plptex(s->x[i], s->y[i], (PLFLT)s->text_dx, (PLFLT)s->text_dy,
+               (PLFLT)s->text_just, s->symbol ? s->symbol : "");
+      }
+      plschr(0.0, 0.1875);
       break;
     case BQNPL_CANDLE:
       draw_ohlc(ctx, s, 1);

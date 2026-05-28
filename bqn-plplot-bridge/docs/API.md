@@ -59,6 +59,15 @@ rsi ← plt.Panel ch‿1.2‿"RSI"‿""
 
 The panel weight controls relative vertical height. The fourth argument is the secondary y-axis label. Leave it empty when unused.
 
+Set an exact y-axis range when autoscale would be distorted by annotations or secondary overlays:
+
+```bqn
+plt.SetYRange ch‿price‿plt.axisPrimary‿ymin‿ymax
+plt.SetYRange ch‿price‿plt.axisSecondary‿y2min‿y2max
+```
+
+`SetYRange` stores a per-panel, per-axis override. It is applied after autoscale and before padding, so overridden axes use the exact bounds supplied.
+
 ## Palette and per-series styling
 
 ```bqn
@@ -125,6 +134,16 @@ Use a transparent palette color or `SeriesRGBA` for band fills.
 plt.Markers ch‿price‿plt.axisPrimary‿"Entries"‿3‿"▲"‿entryX‿(entryX⊏close)
 plt.Markers ch‿price‿plt.axisPrimary‿"Exits"‿2‿"▼"‿exitX‿(exitX⊏close)
 ```
+
+
+### Text labels
+
+```bqn
+label ← plt.Text ch‿price‿plt.axisPrimary‿"Fib label"‿5‿"1.618"‿1‿0‿0‿0.18‿x‿y
+plt.SeriesRGBA ch‿label‿plt.colorPrimary‿255‿180‿80‿0.85
+```
+
+`Text` draws the same UTF-8 text at each supplied data coordinate. The arguments after `text` are `dx`, `dy`, `just`, and `size`, passed through to PLplot text rendering. Use `dx=1, dy=0` for horizontal labels and `just=0` to left-align at the data point.
 
 ### Background spans
 

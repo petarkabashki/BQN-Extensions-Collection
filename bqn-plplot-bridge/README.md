@@ -12,6 +12,7 @@ Version 0.3 adds first-class chart styling:
 - palette RGBA colors with alpha
 - per-series explicit RGBA colors with alpha
 - background spans and filled bands with transparency
+- data-coordinate text labels for annotations
 
 ## Install dependencies on Ubuntu 24.04
 
@@ -95,6 +96,7 @@ atr ← plt.Line ch‿price‿plt.axisSecondary‿"ATR"‿8‿x‿atrValues
 support ← plt.HLine ch‿price‿plt.axisPrimary‿"Support"‿21‿63450
 session ← plt.VLine ch‿price‿plt.axisPrimary‿"Session"‿21‿50
 inPosition ← plt.BackgroundSpans ch‿price‿20‿entryX‿exitX
+fibLabel ← plt.Text ch‿price‿plt.axisPrimary‿"Fib"‿5‿"1.618"‿1‿0‿0‿0.18‿⟨120⟩‿⟨69000⟩
 
 plt.Style ch‿ema20‿plt.styleDash‿2.5
 plt.Style ch‿support‿plt.styleLongDash‿2.0
@@ -116,6 +118,7 @@ plt.Free ch
 - horizontal lines for support/resistance, RSI thresholds, stop-loss/take-profit levels
 - vertical lines for sessions, news events, walk-forward split points, or trade lifecycle markers
 - arbitrary two-point line segments
+- text labels at data coordinates
 - volume bars in a lower panel
 - subplots for RSI, MACD, custom lines, histograms, or combinations
 - primary and secondary y-axis per panel
@@ -135,6 +138,7 @@ plt.Free ch
 | Vertical line | `VLine` | Full panel y-range |
 | Segment | `Segment` | Two-point arbitrary line |
 | Transparent fills | `PaletteRGBA` or `SeriesRGBA` | Driver must support alpha; Cairo/SVG/PDF devices usually do |
+| Text labels | `Text` plus `SeriesRGBA` | Places UTF-8 text at data coordinates with PLplot direction, justification, and size |
 
 ## Documentation
 

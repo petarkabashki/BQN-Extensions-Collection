@@ -11,6 +11,7 @@ ffiFree     ← libPath •FFI ""    ‿"bqnpl_chart_free"          ‿">*"
 ffiOutput   ← libPath •FFI "i32" ‿"bqnpl_set_output"          ‿"*"‿"*u8:c8"‿"*u8:c8"
 ffiTitle    ← libPath •FFI "i32" ‿"bqnpl_set_title"           ‿"*"‿"*u8:c8"
 ffiPanel    ← libPath •FFI "i32" ‿"bqnpl_add_panel"           ‿"*"‿"f64"‿"*u8:c8"‿"*u8:c8"
+ffiYRange   ← libPath •FFI "i32" ‿"bqnpl_set_y_range"         ‿"*"‿"i32"‿"i32"‿"f64"‿"f64"
 
 ffiPalette  ← libPath •FFI "i32" ‿"bqnpl_set_palette_rgba"    ‿"*"‿"i32"‿"i32"‿"i32"‿"i32"‿"f64"
 ffiStyle    ← libPath •FFI "i32" ‿"bqnpl_set_series_style"    ‿"*"‿"i32"‿"i32"‿"f64"
@@ -20,6 +21,7 @@ ffiSRGBA    ← libPath •FFI "i32" ‿"bqnpl_set_series_rgba"     ‿"*"‿"i3
 ffiLine     ← libPath •FFI "i32" ‿"bqnpl_add_line"            ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"i32"‿"*f64"‿"*f64"
 ffiHist     ← libPath •FFI "i32" ‿"bqnpl_add_histogram"       ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"i32"‿"*f64"‿"*f64"
 ffiMarkers  ← libPath •FFI "i32" ‿"bqnpl_add_markers"         ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"*u8:c8"‿"i32"‿"*f64"‿"*f64"
+ffiText     ← libPath •FFI "i32" ‿"bqnpl_add_text"            ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"*u8:c8"‿"f64"‿"f64"‿"f64"‿"f64"‿"i32"‿"*f64"‿"*f64"
 ffiCandles  ← libPath •FFI "i32" ‿"bqnpl_add_candles"         ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"i32"‿"i32"‿"*f64"‿"*f64"‿"*f64"‿"*f64"‿"*f64"
 ffiOHLC     ← libPath •FFI "i32" ‿"bqnpl_add_ohlc_bars"       ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"i32"‿"i32"‿"*f64"‿"*f64"‿"*f64"‿"*f64"‿"*f64"
 ffiVolume   ← libPath •FFI "i32" ‿"bqnpl_add_volume_bars"     ‿"*"‿"i32"‿"i32"‿"*u8:c8"‿"i32"‿"i32"‿"*f64"‿"*f64"
@@ -51,12 +53,14 @@ Free ⇐ {FfiFree 𝕩}
 SetOutput ⇐ {ch‿device‿file: Check FfiOutput ⟨ch,CStr device,CStr file⟩}
 SetTitle ⇐ {ch‿title: Check FfiTitle ⟨ch,CStr title⟩}
 Panel ⇐ {ch‿weight‿ylabel‿y2label: Check FfiPanel ⟨ch,weight,CStr ylabel,CStr y2label⟩}
+SetYRange ⇐ {ch‿panel‿axis‿ymin‿ymax: Check FfiYRange ⟨ch,panel,axis,ymin,ymax⟩}
 
 # Define/redefine a PLplot palette entry. Use indexes >=16 to avoid common built-ins.
 PaletteRGBA ⇐ {ch‿idx‿r‿g‿b‿a: Check FfiPalette ⟨ch,idx,r,g,b,a⟩}
 
 # Change line style/width after creating a layer. Works for lines, bands, markers,
 # histogram borders/fills, hlines, vlines, OHLC/candlestick wicks and outlines.
+# SeriesRGBA also works for text labels.
 Style ⇐ {ch‿series‿lineStyle‿lineWidth: Check FfiStyle ⟨ch,series,lineStyle,lineWidth⟩}
 SeriesColor ⇐ {ch‿series‿which‿idx: Check FfiSColor ⟨ch,series,which,idx⟩}
 SeriesRGBA ⇐ {ch‿series‿which‿r‿g‿b‿a: Check FfiSRGBA ⟨ch,series,which,r,g,b,a⟩}
@@ -69,6 +73,9 @@ Histogram ⇐ {ch‿panel‿axis‿label‿color‿x‿y:
 }
 Markers ⇐ {ch‿panel‿axis‿label‿color‿symbol‿x‿y:
   Check FfiMarkers ⟨ch,panel,axis,CStr label,color,CStr symbol,≠x,x,y⟩
+}
+Text ⇐ {ch‿panel‿axis‿label‿color‿text‿dx‿dy‿just‿size‿x‿y:
+  Check FfiText ⟨ch,panel,axis,CStr label,color,CStr text,dx,dy,just,size,≠x,x,y⟩
 }
 Candles ⇐ {ch‿panel‿axis‿label‿upColor‿downColor‿x‿open‿high‿low‿close:
   Check FfiCandles ⟨ch,panel,axis,CStr label,upColor,downColor,≠x,x,open,high,low,close⟩

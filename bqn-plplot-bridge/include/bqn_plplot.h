@@ -21,7 +21,8 @@ enum {
   BQNPL_BG_SPAN    = 8,
   BQNPL_BAND       = 9,
   BQNPL_HLINE      = 10,
-  BQNPL_VLINE      = 11
+  BQNPL_VLINE      = 11,
+  BQNPL_TEXT       = 12
 };
 
 enum {
@@ -49,6 +50,7 @@ int32_t     bqnpl_set_output(BqnPlChart *chart, const char *device, const char *
 int32_t     bqnpl_show(BqnPlChart *chart, const char *device);
 int32_t     bqnpl_set_title(BqnPlChart *chart, const char *title);
 int32_t     bqnpl_add_panel(BqnPlChart *chart, double height_weight, const char *ylabel, const char *y2label);
+int32_t     bqnpl_set_y_range(BqnPlChart *chart, int32_t panel, int32_t axis, double ymin, double ymax);
 
 /* Palette and per-series styling. RGB values are 0..255; alpha is 0..1. */
 int32_t bqnpl_set_palette_rgba(BqnPlChart *chart, int32_t color_index,
@@ -67,6 +69,9 @@ int32_t bqnpl_add_histogram(BqnPlChart *chart, int32_t panel, int32_t axis, cons
                             int32_t color, int32_t n, const double *x, const double *y);
 int32_t bqnpl_add_markers(BqnPlChart *chart, int32_t panel, int32_t axis, const char *label,
                           int32_t color, const char *symbol, int32_t n, const double *x, const double *y);
+int32_t bqnpl_add_text(BqnPlChart *chart, int32_t panel, int32_t axis, const char *label,
+                       int32_t color, const char *text, double dx, double dy, double just,
+                       double size, int32_t n, const double *x, const double *y);
 int32_t bqnpl_add_candles(BqnPlChart *chart, int32_t panel, int32_t axis, const char *label,
                           int32_t up_color, int32_t down_color, int32_t n,
                           const double *x, const double *open, const double *high,
